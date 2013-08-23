@@ -18,6 +18,10 @@
   var TYPE_CREATE_GAME_SUCCESS = "createGameSuccess";
   var TYPE_JOIN_GAME_SUCCESS = "joinGameSuccess";
   var TYPE_PLAYER_JOIN_GAME = "playerJoinGame";
+  var TYPE_PLAYER_EXIT_GAME = "playerExitGame";
+  var TYPE_PALYER_READY_GAME = "readyForGame";
+  var TYPE_CHECK_START_GAME = "checkStartGame";
+  var TYPE_HOST_EXIT_GAME = "hostExitGame";
   var TYPE_AVAILABLE_PLAYERS = "availablePlayers";
   var TYPE_AVAILABLE_GAMES = "availableGames";
   var intervalTime = 15;
@@ -91,6 +95,9 @@
       try{
 	   	var i = 0;
 		//ad.hasOwnProperty(prop)
+      if(games.hasOwnProperty(sId)) {
+        delete games[sId];
+      }
       if(socketsOfClients.hasOwnProperty(sId)) {
   			console.log("Player: " + socketsOfClients[sId]+ " Disconnect game");
   			console.log("currentGameOfPlayer: " +JSON.stringify(currentGameOfPlayer));
@@ -156,29 +163,46 @@
         }
     }; //game_server.getAvailablePlayers
 
-    game_server.getAvailableGames = function(sId, obj) {
+    game_server.getWaitingGames = function(sId, obj) {
        try{
-          var availableGames = new Array();
-          console.log("obj.appName: " + obj.appName);
+          var waitingGames = new Array();
           var i = 0;
           Object.keys(games).forEach(function(gameId){
-          console.log("games[gameId].appName: " + games[gameId].appName);
-          console.log("games[gameId].playerCount: " + games[gameId].playerCount);
-          if (games[gameId].appName == obj.appName && games[gameId].playerCount < maxPlayerInGame)
-            if(i<=20){
-               availableGames.push(games[gameId]);
+            if (games[gameId].channel == obj.channel && games[gameId].playing == "false"){
+              waitingGames.push(games[gameId]);
+              i++;
             }
-            i++;
           });
-          console.log("222")
-          var dataToSend  = {"notice": TYPE_AVAILABLE_GAMES, "data":{"availableGames":availableGames}};
+          var dataToSend  = {"notice": "waitingGames", "data":{"games":waitingGames}};
           app_server.sendMsgToClient(sId, dataToSend);
            
         }
          catch(err) {
-             console.log("Error when get getAvailableGames: " + JSON.stringify(err));
+             console.log("Error when get getWaittingGames: " + JSON.stringify(err));
         }
-    }; //game_server.getAvailablePlayers
+    }; //game_server.getWaittingGames
+
+    game_server.getPlayingGames = function(sId, obj) {
+       try{
+          var playingGames = new Array();
+          console.log("obj.channel: " + obj.channel);
+          var i = 0;
+          Object.keys(games).forEach(function(gameId){
+            console.log("games[gameId].channel: " + games[gameId].channel);
+            console.log("games[gameId].playing: " + games[gameId].playing);
+            if (games[gameId].channel == obj.channel && games[gameId].playing = "true"){
+              playingGames.push(games[gameId]);
+              i++;
+            }
+          });
+          var dataToSend  = {"notice": "playingGames", "data":{"games":playingGames}};
+          app_server.sendMsgToClient(sId, dataToSend);
+           
+        }
+         catch(err) {
+             console.log("Error when get getPlayingGames: " + JSON.stringify(err));
+        }
+    }; //game_server.getPlayingGames
 
     game_server.findPlayer = function(obj) {
       console.log("findPlayer : " + JSON.stringify(obj));
@@ -235,17 +259,106 @@
       
       var gameId = obj.gameId;
       var playerJoin = obj.player;
-      console.log('Player: ' +playerJoin + " joined to game: " + gameId);
+      console.log('Player: ' +JSON.stringify(playerJoin) + " joined to game: " + gameId);
+      console.log("games: " + JSON.stringify(games));
       if(games.hasOwnProperty(gameId)) {
-        games[gameId].playerClients.push(playerJoin);
-        games[gameId].playerCount =  games[gameId].playerCount + 1;
+        games[gameId].clientPlayers[obj.playerEmail] = playerJoin;
         var dataToSend = {"notice" : TYPE_PLAYER_JOIN_GAME};
         dataToSend.data = obj;
         console.log('dataToSend: ' + JSON.stringify(dataToSend));
-        app_server.sendMsgToClient(gameId, dataToSend);
-        app_server.sendMsgToClient(clients[playerJoin], dataToSend);
+        for(var key in games[gameId].clientPlayers){
+           app_server.sendMsgToClient(clients[key], dataToSend);
+        }
+       
+      //  app_server.sendMsgToClient(clients[obj.playerEmail], dataToSend);
+      }
+      else {
+         console.log("games notHasOwnProperty(gameId)");
       }
     }; //game_server.joinGame
+
+    game_server.exitWaitingGame = function(obj) {
+      
+      var gameId = obj.gameId;
+      var playerExit = obj.player;
+      var isHost = (obj.isHostPlayer == "true");
+      console.log('Player: ' +playerExit + " exit to waiting game: " + gameId);
+      console.log("games: " + JSON.stringify(games));
+       console.log("isHost: " + isHost);
+      if(games.hasOwnProperty(gameId)) {
+        if(!isHost) {
+          console.log("11111");
+          var dataToSend = {"notice" : TYPE_PLAYER_EXIT_GAME};
+          dataToSend.data = {"player" :  games[gameId].clientPlayers[playerExit], "playerEmail" : playerExit};
+          console.log('dataToSend: ' + JSON.stringify(dataToSend));
+          app_server.sendMsgToClient(gameId, dataToSend);
+          delete games[gameId].clientPlayers[playerExit];
+        }
+        else {
+          var dataToSend = {"notice" : TYPE_HOST_EXIT_GAME};
+          dataToSend.data = {"player" :  games[gameId].clientPlayers[playerExit]};
+          console.log('dataToSend: ' + JSON.stringify(dataToSend));
+          for(var email in games[gameId].clientPlayers) {
+            if(email != playerExit)
+              app_server.sendMsgToClient(clients[email], dataToSend);
+          }
+          delete games[gameId];
+        }
+      }
+      else {
+         console.log("games notHasOwnProperty(gameId)");
+      }
+    }; //game_server.exitWaitingGame
+
+    game_server.readyForGame = function(obj) {  
+      var gameId = obj.gameId;
+      var playerEmail = obj.player;
+      var ready = (obj.ready == "true");
+      console.log('Player: ' +JSON.stringify(playerEmail) + " ready for game: " + gameId);
+      console.log("games: " + JSON.stringify(games));
+      console.log("ready: " + ready);
+      if(games.hasOwnProperty(gameId)) {
+        games[gameId].clientPlayers[playerEmail].status = ready;  
+        var dataToSend = {"notice" : TYPE_PALYER_READY_GAME};
+        dataToSend.data = obj;
+        console.log('dataToSend: ' + JSON.stringify(dataToSend));
+        for(var email in games[gameId].clientPlayers) {
+            if(email != playerEmail)
+              app_server.sendMsgToClient(clients[email], dataToSend);
+        }
+      }
+      else {
+         console.log("games notHasOwnProperty(gameId)");
+      }
+    }; //game_server.exitWaitingGame
+
+    game_server.checkStartGame = function(obj) {  
+      
+      var gameId = obj.gameId;
+      var player = obj.player;
+      console.log("checkStartGame: gameId = " + gameId + " , player =  " + player);
+      games[gameId].clientPlayers[player].status = true;
+      if(games.hasOwnProperty(gameId)) {
+        var ready = true;
+        for(var playerEmail in games[gameId].clientPlayers){
+          var status = games[gameId].clientPlayers[playerEmail].status;
+          console.log(typeof status);
+          console.log("player: " + playerEmail + ", ready = " + status);
+          if(status == false || status == "false"){
+            console.log("player: " + playerEmail + ", ready = " + status + " break");
+            ready = false;
+            break;
+          }
+        }
+        var dataToSend = {"notice" : TYPE_CHECK_START_GAME};
+        dataToSend.data = {"ready" : ready};
+        console.log('dataToSend: ' + JSON.stringify(dataToSend));
+        app_server.sendMsgToClient(clients[player], dataToSend);
+      }
+      else {
+         console.log("games notHasOwnProperty(gameId)");
+      }
+    }; //game_server.exitWaitingGame
 
     game_server.inviteToGame = function(sId, obj) {
       var dataToSend = {};
@@ -276,113 +389,107 @@
         app_server.sendMsgToClient(clients[obj.sender], dataToSend);
     }; //game_server.confirmJoinGame
 
-     game_server.startGame = function(_id, obj) {
-	   // if(!games.hasOwnProperty(_id)){
-  		var gameToSave = JSON.parse(obj.game);
+    game_server.startGame = function(obj) {
+      console.log(00000 +"");
+      var gameId = obj.gameId;
   		var dataToSend = {};
-  		console.log("Game before save: " + JSON.stringify(gameToSave));
-  		games[_id] = gameToSave;
-  		gameToSave.gameId = _id;
-  		obj.game = gameToSave;
   		dataToSend.notice = "startGame";
   		dataToSend.data = obj;
-  		 try{
-  		  gameToSave.playerIds.forEach(function(playerId){
-  			players[playerId].status = 2;
-  			currentGameOfPlayer[playerId] = _id;
-  			app_server.sendMsgToClient(clients[playerId], dataToSend);
-  		  });
-  		 }
-  		 catch(err) {
-  		   console.log("Err: " +JSON.stringify(err));
-  		 }
-  		
-  		 numberOfPlayerAnswer[_id] = 0;
-  		 games[_id].passedRound = {};
-       if(recordIntervals.hasOwnProperty(_id)){
-        try{
-          clearTimeout(recordIntervals[_id]);
-          delete recordIntervals[_id];
+      console.log(JSON.stringify(games[gameId]));
+      if(games.hasOwnProperty(gameId)) {
+        console.log(11111 +"");
+        for(var playerEmail in games[gameId].clientPlayers){
+          app_server.sendMsgToClient(clients[playerEmail], dataToSend);
         }
-         catch(err) {
-         console.log("Err: " +JSON.stringify(err));
+        console.log(11111 +"");
+        numberOfPlayerAnswer[gameId] = 0;
+        games[gameId].passedRound = {};
+        console.log(22222 +"");
+        if(recordIntervals.hasOwnProperty(gameId)){
+          try{
+            clearTimeout(recordIntervals[gameId]);
+            delete recordIntervals[gameId];
+          }
+           catch(err) {
+           console.log("Err: " +JSON.stringify(err));
+          }
         }
-       }
-        games[_id].playerIds.forEach(function(playerId){
-          var s = {};
-          s[playerId] = 0;
-          games[_id].scores.push(s);
-        });
-        console.log("game saved with: "  + JSON.stringify(games[_id]));
-  		 setTimeout(function() {
-  		   recordIntervals[_id] = startIntervalTimer(_id, intervalTime);
-  		 }, 3*1000);
-  		//}
+        console.log(33333 +" --- " + JSON.stringify(games[gameId]));
+        for(var playerEmail in games[gameId].clientPlayers){
+          games[gameId].scores[playerEmail] = 0;
+        } 
+        console.log(44444 +"");
+        console.log("game saved with: "  + JSON.stringify(games[gameId]));
+        setTimeout(function() {
+          recordIntervals[gameId] = startIntervalTimer(gameId, intervalTime);
+        }, 5*1000);
+      }
+      
     }; //game_server.confirmJoinGame
 
     game_server.onPlayerAnswer = function(obj) {
+      onQuizAnswer(obj);
+    }; //game_server.onPlayerAnswer
+
+    function onQuizAnswer(obj) {
+      var i = 0;
       var _id = obj.gameId;
-	    var round = obj.round;
-      if(games.hasOwnProperty(_id) && (games[_id].currRound == round)){
-        console.log("games.hasOwnProperty(_id) && (games.currRound === round)");
-         //var dataToSend = {};
+
+      var round = obj.round;
+       console.log("GAmeID: " + _id + " -- Round: " +round);
+      console.log(JSON.stringify(games[_id]));
+      if(games.hasOwnProperty(_id) && (games[_id].currentRound == round)){
          numberOfPlayerAnswer[_id] = numberOfPlayerAnswer[_id]+1;
          console.log(_id + " --- " + obj.questionId +" ----- " + obj.result + " \\\\\ " + JSON.stringify(numberOfPlayerAnswer));
          console.log("Found game: " +JSON.stringify(games[_id]));
-    		 if(games[_id].passedRound[round] != true) // undefined or false
-    			games[_id].passedRound[round] = false;
-             try{
-              for(var i =0;i<games[_id].scores.length;i++) {
-                var playerScore = games[_id].scores[i];
-                if(playerScore.hasOwnProperty(obj.playerAnswer)){
-                  if(obj.result == 'true')
-                    playerScore[obj.playerAnswer] = playerScore[obj.playerAnswer] +1;
-                  else
-                    playerScore[obj.playerAnswer] = playerScore[obj.playerAnswer] -1;
+         if(games[_id].passedRound[round] != true) // undefined or false
+            games[_id].passedRound[round] = false;
+         try{
+          if(obj.result == 'true')
+             games[_id].scores[obj.player] =  games[_id].scores[obj.player] +1;
+          else
+             games[_id].scores[obj.player] =  games[_id].scores[obj.player] -1;
+          for(var playerEmail in games[_id].clientPlayers){
+            if(playerEmail != obj.player){
+               var dataToSend = {};
+               dataToSend.notice = obj.type;
+               dataToSend.data = obj;
+               sendMessageToAPlayer(playerEmail, dataToSend);
+            }
+          }
+          console.log("games[_id].passedRound[round]: " +games[_id].passedRound[round] + " -- obj.result: " + obj.result + " -- umberOfPlayerAnswer[_id]:" + numberOfPlayerAnswer[_id]);
+          if(games[_id].passedRound[round] == false && (obj.result == 'true' || numberOfPlayerAnswer[_id]>= 2)) {
+            console.log("clearTimeout(recordIntervals[_id])");
+            clearTimeout(recordIntervals[_id]);
+             games[_id].passedRound[round] = true;
+             games[_id].currentRound = games[_id].currentRound+1;
+            numberOfPlayerAnswer[_id]= 0;
+            if(games[_id].currentRound < games[_id].round){
+              console.log("Request next round");
+              setTimeout(function() {
+                sendRequestNextRoundToAll(games[_id]);
+                if(recordIntervals.hasOwnProperty(_id)) {
+                  delete recordIntervals[_id];
                 }
-              }
-              games[_id].playerIds.forEach(function(playerId){
-                if(playerId != obj.playerAnswer){
-                   var dataToSend = {};
-                   dataToSend.notice = obj.type;
-                   dataToSend.data = obj;
-                   sendMessageToAPlayer(playerId, dataToSend);
-                }
-              });
-              if(games[_id].passedRound[round] == false && (obj.result == 'true' || numberOfPlayerAnswer[_id]>= games[_id].playerIds.length)) {
-                clearTimeout(recordIntervals[_id]);
-    			       games[_id].passedRound[round] = true;
-                //gameRounds[_id] = gameRounds[_id] - 1;
-    			       games[_id].currRound = games[_id].currRound+1;
-                numberOfPlayerAnswer[_id]= 0;
-                //console.log("Game round remain: " + gameRounds[_id]);
-                if(games[_id].currRound < games[_id].roundNum){
-                  console.log("Request next round");
-                  setTimeout(function() {
-                    sendRequestNextRoundToAll(games[_id]);
-                    if(recordIntervals.hasOwnProperty(_id)) {
-                     delete recordIntervals[_id];
-                    }
-                    recordIntervals[_id] = startIntervalTimer(_id, intervalTime);
-                  }, 2*1000);
-          			} 
-          			else {
-                  setTimeout(function() {
-                    endgame(_id);
-                  }, 2*1000);
-          				
-          			}
-    		     }
-    		}
-    		catch (err) {
-    			console.log("Error when process player answer: " + JSON.stringify(err));
-    		}
+                recordIntervals[_id] = startIntervalTimer(_id, intervalTime);
+              }, 2*1000);
+            } 
+            else {
+              setTimeout(function() {
+                console.log("currentRound: " +games[_id].currentRound + " --- Total round: " +games[_id].round );
+                endgame(_id);
+              }, 2*1000);
+            }
+         }
+        }
+        catch (err) {
+          console.log("Error when process player answer: " + JSON.stringify(err));
+        }
       }
       else {
         console.log(" nonnnnnnnnnnnnnnnn games.hasOwnProperty(_id) && (games.currRound === round) ");
       }  
-    }; //game_server.onPlayerAnswer
-
+    }
 
     game_server.onReceiveRqEndGame = function(obj) {
       var _id = obj.gameId;
@@ -414,12 +521,13 @@
         var count = 1;
         var interval = setTimeout(function(){
 		    try{
-    			games[_id].currRound = games[_id].currRound+1;
-            if(games[_id].currRound < games[_id].roundNum){
+    			games[_id].currentRound = games[_id].currentRound+1;
+            if(games[_id].currentRound < games[_id].round){
               var end_time = new Date();
               var dif = end_time.getTime() - start_time.getTime();
               console.log("Tick no. " + count + " after " + Math.round(dif/1000) + " seconds");
               numberOfPlayerAnswer[_id]= 0;
+              console.log("Next round by interval");
               sendRequestNextRoundToAll(games[_id]);
               count++;
               delete recordIntervals[_id];
@@ -427,6 +535,7 @@
             }
             else{
               clearTimeout(interval);
+              console.log("Endgame by timerrrrr");
               endgame(_id);
             }
     		}
@@ -451,12 +560,12 @@
 			   delete numberOfPlayerAnswer[_id];
 				//delete gameRounds[_id];
 				console.log(JSON.stringify(games));
-				games[_id].playerIds.forEach(function(playerId){
-				  players[playerId].status = 1;
-				  if(currentGameOfPlayer.hasOwnProperty(playerId)){
-					delete currentGameOfPlayer[playerId];
-				  }
-				});
+        for(var playerEmail in games[_id].clientPlayers){
+           players[playerEmail].status = 1;
+           if(currentGameOfPlayer.hasOwnProperty(playerEmail)){
+             delete currentGameOfPlayer[playerEmail];
+           }
+        }
 				delete games[_id];
 			}
 			 catch(err) {
@@ -477,13 +586,13 @@
              delete recordIntervals[_id];
               delete numberOfPlayerAnswer[_id];
               console.log(JSON.stringify(games));
-              games[_id].playerIds.forEach(function(playerId){
-                 if(currentGameOfPlayer.hasOwnProperty(playerId)){
-  					delete currentGameOfPlayer[playerId];
-  				}
-                if(players[playerId].status  == 2 )
-                 players[playerId].status = 1;
-              });
+              for(var playerEmail in games[_id].clientPlayers){
+                if(currentGameOfPlayer.hasOwnProperty(playerEmail)){
+                   delete currentGameOfPlayer[playerEmail];
+                }
+                if(players[playerEmail].status  == 2 )
+                 players[playerEmail].status = 1;
+              }
               delete games[_id];
           }
           catch(err) {
@@ -498,7 +607,7 @@
        if(typeof game != undefined) {
           var dataToSend = {};
           dataToSend.notice = "nextRound";
-          dataToSend.data = {"round" : game.currRound, "scores" : game.scores};
+          dataToSend.data = {"round" : game.currentRound, "scores" : game.scores};
           sendMessageToAll(game,dataToSend);
           console.log("game saved: "  + JSON.stringify(game));
        }
@@ -507,9 +616,9 @@
     function sendMessageToAll(game, msg) {
       if(typeof game != undefined) {
         try{
-          game.playerIds.forEach(function(playerId){
-            sendMessageToAPlayer(playerId, msg);
-          });
+          for(var playerEmail in game.clientPlayers){
+            sendMessageToAPlayer(playerEmail, msg);
+          }
         }
         catch (err) {
             console.log("Error when send msg to all");

@@ -81,6 +81,15 @@ io.sockets.on('connection', function(socket) {
     else if(obj.type == "joinGame") {
       game_server.joinGame(obj);
     }
+    else if(obj.type == "exitWaitingGame") {
+      game_server.exitWaitingGame(obj);
+    }
+    else if(obj.type == "readyForGame") {
+      game_server.readyForGame(obj);
+    }
+    else if(obj.type == "checkStartGame") {
+      game_server.checkStartGame(obj);
+    }
     else if(obj.type == "findPlayer") {
       game_server.findPlayer(obj);
     }
@@ -88,7 +97,7 @@ io.sockets.on('connection', function(socket) {
 		  game_server.confirmJoinGame(obj);
 		}
 		else if(obj.type == "startGame") {
-		  game_server.startGame(socket.id, obj);
+		  game_server.startGame(obj);
 		}
 		 else if(obj.type == "playerAnswer") {
 		  game_server.onPlayerAnswer(obj);
@@ -96,8 +105,11 @@ io.sockets.on('connection', function(socket) {
 		 else if(obj.type == "onlinePlayers") {
 		  game_server.getAvailablePlayers(socket.id, obj);
 		}
-    else if(obj.type == "availableGames") {
-      game_server.getAvailableGames(socket.id, obj);
+    else if(obj.type == "waitingGames") {
+      game_server.getWaitingGames(socket.id, obj);
+    }
+    else if(obj.type == "playingGames") {
+      game_server.getPlayingGames(socket.id, obj);
     }
 		else if(obj.type == "invite") {
 		  game_server.inviteToGame(socket.id, obj);
@@ -113,6 +125,7 @@ io.sockets.on('connection', function(socket) {
 		}
    }
    catch (err) {
+       console.log("Errorrrorororoororororororororororororo");
    }
     
   });
