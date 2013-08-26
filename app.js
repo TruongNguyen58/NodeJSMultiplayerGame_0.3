@@ -70,7 +70,7 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('request', function(msg) {
     var obj = JSON.parse(msg);
-   // console.log("Receive request from cilent: " +msg);
+    console.log("Receive request type from client: " +obj.type);
    try{
     if(obj.type == "sendMsgToOtherClient") {
       game_server.sendMsgToOtherClient(obj);
@@ -80,6 +80,9 @@ io.sockets.on('connection', function(socket) {
 		}
     else if(obj.type == "createGame") {
       game_server.createGame(obj);
+    }
+    else if(obj.type == "updateGame") {
+      game_server.updateGame(obj);
     }
     else if(obj.type == "joinGame") {
       game_server.joinGame(obj);

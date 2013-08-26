@@ -277,8 +277,33 @@
       games[gameId] = game;
       var dataToSend = {"notice" : TYPE_CREATE_GAME_SUCCESS};
        console.log('dataToSend: ' + JSON.stringify(dataToSend));
-      app_server.sendMsgToClient(gameId, dataToSend);
+      for(var key in games[gameId].clientPlayers){
+           app_server.sendMsgToClient(clients[key], dataToSend);
+      }
     }; //game_server.createGame
+
+    game_server.updateGame = function(obj) {
+      console.log("111111111");
+      var newGame = obj.game;
+      var gameId = newGame.id;
+      console.log("22222222");
+      console.log('gameId: ' + gameId);
+      delete games[gameId];
+      console.log("333333");
+      games[gameId] = newGame;
+      console.log("4444444");
+
+      for(var key in games[gameId].clientPlayers){
+         games[gameId].clientPlayers[key].status = false;  
+      }
+       console.log("555555");
+      var dataToSend = {"notice" : "updateGame"};
+      dataToSend.data = obj;
+      console.log('dataToSend: ' + JSON.stringify(dataToSend));
+      for(var key in games[gameId].clientPlayers){
+         app_server.sendMsgToClient(clients[key], dataToSend);
+      }
+    }; //game_server.updateGame
 
     game_server.joinGame = function(obj) {
       
