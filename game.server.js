@@ -1,4 +1,5 @@
 /*  Copyright (c) 2013 TruongNGUYEN
+    Server for projectX
     BH Licensed.
 */
 
@@ -31,7 +32,7 @@
     var recordIntervals = {};
     var gameTimers = {};
     var numberOfPlayerAnswer = {};
-    var clients = {};
+    var clients = {}; 
     var socketsOfClients = {};
     var games = {};
     var players = {};
@@ -509,10 +510,9 @@
       console.log("Game with id: " + _id + " receive request to end!");
       console.log("Current Games: " + JSON.stringify(games) );
       if(games.hasOwnProperty(_id)){
-        clearTimeout(recordIntervals[_id]);
         endgame(_id);
       }
-    }; //game_server.onPlayerAnswer
+    }; //game_server.onReceiveRqEndGame
 
     function is_empty(obj) {
     // null and undefined are empty
@@ -595,7 +595,7 @@
 
     function endgame( _id) {
       clearTimeout(recordIntervals[_id]);
-      clearInterval(gameTimers[_id]);
+      clearInterval(  [_id]);
   	  if(games.hasOwnProperty(_id)){
   		console.log("End game! zzzzzzzzzzzzzzzzz: " +JSON.stringify(games[_id]));
   		var dataToSend = {};

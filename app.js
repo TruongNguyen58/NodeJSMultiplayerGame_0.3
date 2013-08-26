@@ -1,7 +1,7 @@
-
-/**
- * Module dependencies.
- */
+/*  Copyright (c) 2013 TruongNGUYEN
+    Server for projectX
+    BH Licensed.
+*/
 
 var express = require('express')
   , socketio = require('socket.io')
