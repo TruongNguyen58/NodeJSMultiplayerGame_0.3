@@ -51,6 +51,28 @@
       res.send(str);
     };
 
+    game_server.sendMsgToOtherClient = function(obj) {
+      var fromClient = obj.fromClient;
+      var toClients = obj.toClients;
+      var data = obj.msg;
+      var dataToSend = {};
+      dataToSend.fromClient = fromClient;
+      dataToSend.msg = data;
+      if(data.hasOwnProperty("gameId")){
+        var gameId = data.gameId;
+        if(games.hasOwnProperty(gameId)) {
+          toClients.forEach(function(toClient){
+            sendMessageToAPlayer(toClient, dataToSend);
+          });
+        }
+      }
+      else {
+        toClients.forEach(function(toClient){
+          sendMessageToAPlayer(toClient, dataToSend);
+        });
+      }
+    };
+
     game_server.setPlayer = function(sId, data) {
       console.log("begin set user");
       onUserConnect(sId, data);
