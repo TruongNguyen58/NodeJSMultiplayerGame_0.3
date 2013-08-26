@@ -56,6 +56,7 @@
       var toClients = obj.toClients;
       var data = obj.msg;
       var dataToSend = {};
+      dataToSend.notice = "receiveMsgFromOtherClient";
       dataToSend.fromClient = fromClient;
       dataToSend.msg = data;
       if(data.hasOwnProperty("gameId")){
