@@ -440,7 +440,7 @@
         } 
         console.log("game saved with: "  + JSON.stringify(games[gameId]));
         setTimeout(function() {
-          gameTimers[gameId] = startGameTimer();
+          // gameTimers[gameId] = startGameTimer();
           recordIntervals[gameId] = startIntervalTimer(gameId, intervalTime);
         }, 3*1000);
       }
@@ -595,7 +595,7 @@
 
     function endgame( _id) {
       clearTimeout(recordIntervals[_id]);
-      clearInterval(  [_id]);
+      // clearInterval(gameTimers[_id]);
   	  if(games.hasOwnProperty(_id)){
   		console.log("End game! zzzzzzzzzzzzzzzzz: " +JSON.stringify(games[_id]));
   		var dataToSend = {};
@@ -605,7 +605,7 @@
   		setTimeout(function() {
           try{
              delete recordIntervals[_id];
-             delete gameTimers[_id];
+             // delete gameTimers[_id];
               delete numberOfPlayerAnswer[_id];
               console.log(JSON.stringify(games));
               for(var playerEmail in games[_id].clientPlayers){
