@@ -5,7 +5,7 @@
 
   var TYPE_INVITE = "invite";
   var TYPE_FOUND_PLAYER = "foundPlayer";
-   var TYPE_PLAYER_NOT_AVAILABLE = "playerNotAvailable";
+  var TYPE_PLAYER_NOT_AVAILABLE = "playerNotAvailable";
   var TYPE_WELLCOME = "wellcome";
   var TYPE_RECEIVE_CONFIRM = "receiveConfirm";
   var TYPE_START_GAME = "startGame";
@@ -76,7 +76,6 @@
     };
 
     game_server.setPlayer = function(sId, data) {
-      console.log("begin set user");
       onUserConnect(sId, data);
 	 	  app_server.sendToClient(sId, TYPE_CONNECTED, {"clientId" : sId});
     };
@@ -84,71 +83,62 @@
     function onUserConnect(sId, playerData) {
       var email = playerData.email;
       var i =0;
-      console.log("User: " +email  + " connected with socketID: " + sId);
       // Does not exist ... so, proceed
       clients[email] = sId;
       if(players.hasOwnProperty(email)) {
-		  console.log("players.hasOwnProperty(" +email+")");
 		  try{
 		  	if(currentGameOfPlayer.hasOwnProperty(email)) {
 				  var gameId = currentGameOfPlayer[email];
 				  var data = {};
 				  data.player = playerName;
 				  endWhenPlayerQuitGame( gameId, "playerQuitGame", data)
-			 }
+			  }
 		  }
 	   	catch (err) {
 	   	}
         delete players[email];
       }
-      players[email] = {"name": playerData.name, "status": playerData.status, "socketId" : sId, "channel" : playerData.channel};
-      console.log("Current player: " + JSON.stringify(players[email]));
+      players[email] = {"name": playerData.name, "status": playerData.status, "socketId" : sId, "channel" : playerData.channel, "email" : email};
       Object.keys(socketsOfClients).forEach(function(oldSocketId){
-         console.log("Key: " +oldSocketId + " Value: " + socketsOfClients[oldSocketId] + " email: " + email);
         if (socketsOfClients[oldSocketId] == email){
           delete socketsOfClients[oldSocketId];
         }
       });
-    
       socketsOfClients[sId] = email;
-      console.log("clients: " +JSON.stringify(clients));
-      console.log("socketsOfClients: " +JSON.stringify(socketsOfClients));
     }
 
     game_server.onUserDisconnect = function(sId) {
-      
       try{
-	   	var i = 0;
-		//ad.hasOwnProperty(prop)
-      if(games.hasOwnProperty(sId)) {
-        delete games[sId];
-      }
-      if(socketsOfClients.hasOwnProperty(sId)) {
-  			console.log("Player: " + socketsOfClients[sId]+ " Disconnect game");
-  			console.log("currentGameOfPlayer: " +JSON.stringify(currentGameOfPlayer));
-  			if(currentGameOfPlayer.hasOwnProperty(socketsOfClients[sId])) {
-  				var gameId = currentGameOfPlayer[socketsOfClients[sId]];
-  				var data = {};
-  				data.player = socketsOfClients[sId];
-  				endWhenPlayerQuitGame( gameId, "playerQuitGame", data)
-  			}
-        if(games.hasOwnProperty(sId)) {
-           setTimeout(function(){
-            delete games[sId];
-         }, 3*1000);
+        if(socketsOfClients.hasOwnProperty(sId)) {
+          var player = socketsOfClients[sId];
+    			if(currentGameOfPlayer.hasOwnProperty(player)) {
+    				var gameId = currentGameOfPlayer[player];
+    				if(games.hasOwnProperty(gameId)) {
+              console.log("games[gameId].playing: " + games[gameId].playing  + " -- " + typeof games[gameId].playing);
+              if(games[gameId].playing == false || games[gameId].playing == "false"){
+                var obj = {"gameId" : gameId, 
+                           "isHostPlayer":games[gameId].clientPlayers[player].isHost,
+                           "player":player };
+                exitWaitingGame(obj);
+              }
+              else {
+                console.log("User disconnect when playing game");
+                var data = {"player":player};
+                endWhenPlayerQuitGame( gameId, "playerQuitGame", data)
+              }
+            }
+    			}
+    			delete players[socketsOfClients[sId]];
+    			delete clients[socketsOfClients[sId]];
+    			delete socketsOfClients[sId];
+          }
         }
-  			delete players[socketsOfClients[sId]];
-  			delete clients[socketsOfClients[sId]];
-  			delete socketsOfClients[sId];
-        }
-      }
       catch (err) {
         console.log("ERORR onUserDisconnect: " + JSON.stringify(err));
       }
     };
 
     game_server.onUserQuitGame = function(sId) {
-       console.log("Player: " + clients[socketsOfClients[sId]]+ " Quit game");
       try{
         if(socketsOfClients.hasOwnProperty(sId)) {
           if(currentGameOfPlayer.hasOwnProperty(socketsOfClients[sId])) {
@@ -168,18 +158,17 @@
     game_server.getAvailablePlayers = function(sId, obj) {
        try{
           var availableUsers = new Array();
-          console.log("online users: " + JSON.stringify(players));
           var i = 0;
-          Object.keys(players).forEach(function(userName){
-          if (players[userName].appName == obj.appName && players[userName].status == 1)
+          Object.keys(players).forEach(function(email){
+            console.log("Player: " + JSON.stringify(players[email]));
+          if (players[email].appName == obj.appName && players[email].status == 1)
             if(i<=20){
-               availableUsers.push(userName);
+               availableUsers.push(players[email]);
             }
             i++;
           });
-          console.log('Sending availableUsers to ' + sId);
 
-          var dataToSend  = {"notice": TYPE_ONLINE_PLAYERS, "data":{TYPE_AVAILABLE_PLAYERS:availableUsers}};
+          var dataToSend  = {"notice": TYPE_ONLINE_PLAYERS, "data":{"availablePlayers":availableUsers}};
           app_server.sendMsgToClient(sId, dataToSend);
            
         }
@@ -210,12 +199,9 @@
     game_server.getPlayingGames = function(sId, obj) {
        try{
           var playingGames = new Array();
-          console.log("obj.channel: " + obj.channel);
           var i = 0;
           Object.keys(games).forEach(function(gameId){
-            console.log("games[gameId].channel: " + games[gameId].channel);
-            console.log("games[gameId].playing: " + games[gameId].playing);
-            if (games[gameId].channel == obj.channel && games[gameId].playing = "true"){
+            if (games[gameId].channel == obj.channel && games[gameId].playing == "true"){
               playingGames.push(games[gameId]);
               i++;
             }
@@ -230,33 +216,26 @@
     }; //game_server.getPlayingGames
 
     game_server.findPlayer = function(obj) {
-      console.log("findPlayer : " + JSON.stringify(obj));
         var dataToSend = {};
         dataToSend.notice = TYPE_FOUND_PLAYER;
-        console.log('looking for a player for user: ' + obj.sender);
         var playerName = obj.player;
         if (players.hasOwnProperty(playerName)) {
           if(playerName != obj.sender && players[playerName].status == 1) {
             dataToSend.data = {"player":playerName, "available" : true};
-            console.log('found user: ' + JSON.stringify(playerName));
           }
           else {
             dataToSend.data = {"player":playerName, "available" : false};
-            console.log('player:' + JSON.stringify(playerName) + " not available");
           }  
         }
         else {
           dataToSend.data = {"player":playerName, "available" : false};
-          console.log('not found user: ' + JSON.stringify(playerName));
         }
         app_server.sendMsgToClient(clients[obj.sender], dataToSend);
     }; //game_server.findPlayer
 
     game_server.findGame = function(obj) {
         var dataToSend = {};
-        console.log('looking for a game for user: ' + obj.data.sender);
         for(var playerName in players) {
-          console.log(JSON.stringify(playerName));
            if (players.hasOwnProperty(playerName)) {
              if(playerName != obj.sender && players[playerName].status ==1) {
                 dataToSend.notice = TYPE_INVITE;
@@ -270,38 +249,32 @@
     }; //game_server.findGame
 
     game_server.createGame = function(obj) {
-      console.log('createGame: ' + JSON.stringify(obj));
       var game = obj.game;
       var gameId = game.id;
-       console.log('gameId: ' + gameId);
       games[gameId] = game;
       var dataToSend = {"notice" : TYPE_CREATE_GAME_SUCCESS};
-       console.log('dataToSend: ' + JSON.stringify(dataToSend));
       for(var key in games[gameId].clientPlayers){
-           app_server.sendMsgToClient(clients[key], dataToSend);
+
+        currentGameOfPlayer[key] = gameId;
+        players[key].status = 2;
+        console.log("Email: " + key + " -- " + JSON.stringify(players[key]));
+        app_server.sendMsgToClient(clients[key], dataToSend);
       }
+
     }; //game_server.createGame
 
     game_server.updateGame = function(obj) {
-      console.log("111111111");
       var newGame = obj.game;
       var gameId = newGame.id;
-      console.log("22222222");
-      console.log('gameId: ' + gameId);
       delete games[gameId];
-      console.log("333333");
       games[gameId] = newGame;
-      console.log("4444444");
-
       for(var key in games[gameId].clientPlayers){
          games[gameId].clientPlayers[key].status = false;  
       }
-       console.log("555555");
       var dataToSend = {"notice" : "updateGame"};
       dataToSend.data = obj;
-      console.log('dataToSend: ' + JSON.stringify(dataToSend));
       for(var key in games[gameId].clientPlayers){
-         app_server.sendMsgToClient(clients[key], dataToSend);
+        app_server.sendMsgToClient(clients[key], dataToSend);
       }
     }; //game_server.updateGame
 
@@ -309,18 +282,15 @@
       
       var gameId = obj.gameId;
       var playerJoin = obj.player;
-      console.log('Player: ' +JSON.stringify(playerJoin) + " joined to game: " + gameId);
-      console.log("games: " + JSON.stringify(games));
       if(games.hasOwnProperty(gameId)) {
         games[gameId].clientPlayers[obj.playerEmail] = playerJoin;
         var dataToSend = {"notice" : TYPE_PLAYER_JOIN_GAME};
         dataToSend.data = obj;
-        console.log('dataToSend: ' + JSON.stringify(dataToSend));
         for(var key in games[gameId].clientPlayers){
-           app_server.sendMsgToClient(clients[key], dataToSend);
+          currentGameOfPlayer[key] = gameId;
+          players[key].status = 2;
+          app_server.sendMsgToClient(clients[key], dataToSend);
         }
-       
-      //  app_server.sendMsgToClient(clients[obj.playerEmail], dataToSend);
       }
       else {
          console.log("games notHasOwnProperty(gameId)");
@@ -328,50 +298,49 @@
     }; //game_server.joinGame
 
     game_server.exitWaitingGame = function(obj) {
-      
+      exitWaitingGame(obj);
+    }; //game_server.exitWaitingGame
+
+    function exitWaitingGame(obj) {
       var gameId = obj.gameId;
       var playerExit = obj.player;
       var isHost = (obj.isHostPlayer == "true");
-      console.log('Player: ' +playerExit + " exit to waiting game: " + gameId);
-      console.log("games: " + JSON.stringify(games));
-       console.log("isHost: " + isHost);
       if(games.hasOwnProperty(gameId)) {
         if(!isHost) {
-          console.log("11111");
           var dataToSend = {"notice" : TYPE_PLAYER_EXIT_GAME};
           dataToSend.data = {"player" :  games[gameId].clientPlayers[playerExit], "playerEmail" : playerExit};
-          console.log('dataToSend: ' + JSON.stringify(dataToSend));
           app_server.sendMsgToClient(gameId, dataToSend);
           delete games[gameId].clientPlayers[playerExit];
+          delete currentGameOfPlayer[playerExit];
+          players[playerExit].status = 1;
         }
         else {
           var dataToSend = {"notice" : TYPE_HOST_EXIT_GAME};
           dataToSend.data = {"player" :  games[gameId].clientPlayers[playerExit]};
-          console.log('dataToSend: ' + JSON.stringify(dataToSend));
           for(var email in games[gameId].clientPlayers) {
+            players[email].status = 1;
+            delete currentGameOfPlayer[email];
             if(email != playerExit)
               app_server.sendMsgToClient(clients[email], dataToSend);
+
           }
           delete games[gameId];
         }
+
       }
       else {
          console.log("games notHasOwnProperty(gameId)");
       }
-    }; //game_server.exitWaitingGame
+    }
 
     game_server.readyForGame = function(obj) {  
       var gameId = obj.gameId;
       var playerEmail = obj.player;
       var ready = (obj.ready == "true");
-      console.log('Player: ' +JSON.stringify(playerEmail) + " ready for game: " + gameId);
-      console.log("games: " + JSON.stringify(games));
-      console.log("ready: " + ready);
       if(games.hasOwnProperty(gameId)) {
         games[gameId].clientPlayers[playerEmail].status = ready;  
         var dataToSend = {"notice" : TYPE_PALYER_READY_GAME};
         dataToSend.data = obj;
-        console.log('dataToSend: ' + JSON.stringify(dataToSend));
         for(var email in games[gameId].clientPlayers) {
             if(email != playerEmail)
               app_server.sendMsgToClient(clients[email], dataToSend);
@@ -386,23 +355,22 @@
       
       var gameId = obj.gameId;
       var player = obj.player;
-      console.log("checkStartGame: gameId = " + gameId + " , player =  " + player);
       games[gameId].clientPlayers[player].status = true;
       if(games.hasOwnProperty(gameId)) {
         var ready = true;
+        if(lengthOfObj(games[gameId].clientPlayers) < games[gameId].playerNumber){
+          ready = false;
+        }
+        else
         for(var playerEmail in games[gameId].clientPlayers){
           var status = games[gameId].clientPlayers[playerEmail].status;
-          console.log(typeof status);
-          console.log("player: " + playerEmail + ", ready = " + status);
           if(status == false || status == "false"){
-            console.log("player: " + playerEmail + ", ready = " + status + " break");
             ready = false;
             break;
           }
         }
         var dataToSend = {"notice" : TYPE_CHECK_START_GAME};
         dataToSend.data = {"ready" : ready};
-        console.log('dataToSend: ' + JSON.stringify(dataToSend));
         app_server.sendMsgToClient(clients[player], dataToSend);
       }
       else {
@@ -412,28 +380,22 @@
 
     game_server.inviteToGame = function(sId, obj) {
       var dataToSend = {};
-      console.log('looking for a game for user: ' + obj.data.sender);
-      obj.data.friends.forEach(function(playerId){
-        if(players[playerId].status == 1) {
-          dataToSend.notice = TYPE_INVITE;
-           dataToSend.data = obj.data;
-           console.log('send invite to user: ' + JSON.stringify(playerId));
-           app_server.sendMsgToClient(clients[playerId], dataToSend);
-        }
-        else {
-          dataToSend.notice = TYPE_PLAYER_NOT_AVAILABLE;
-          dataToSend.data = {"friends" : playerId};
-          app_server.sendMsgToClient(sId, dataToSend);
-        }
-      
-      });
+      var playerEmail = obj.player;
+      if(players[playerEmail].status == 1) {
+         dataToSend.notice = TYPE_INVITE;
+         dataToSend.data = obj;
+         app_server.sendMsgToClient(clients[playerId], dataToSend);
+      }
+      else {
+        dataToSend.notice = TYPE_PLAYER_NOT_AVAILABLE;
+        dataToSend.data = {"player" : playerEmail};
+        app_server.sendMsgToClient(sId, dataToSend);
+      }
        
     }; //game_server.inviteToGame
 
     game_server.confirmJoinGame = function(obj) {
-        console.log("Available user: " + JSON.stringify(clients));
         var dataToSend = {};
-        console.log('send confirm to sender: ' + obj.sender);
         dataToSend.notice = "receiveConfirm"
         dataToSend.data = obj;
         app_server.sendMsgToClient(clients[obj.sender], dataToSend);
@@ -444,7 +406,6 @@
   		var dataToSend = {};
   		dataToSend.notice = "startGame";
   		dataToSend.data = obj;
-      console.log(JSON.stringify(games[gameId]));
       if(games.hasOwnProperty(gameId)) {
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
@@ -463,6 +424,7 @@
         for(var playerEmail in games[gameId].clientPlayers){
           games[gameId].scores[playerEmail] = 0;
         } 
+        games[gameId].playing = "true";
         console.log("game saved with: "  + JSON.stringify(games[gameId]));
         setTimeout(function() {
           // gameTimers[gameId] = startGameTimer();
@@ -481,12 +443,8 @@
       var _id = obj.gameId;
 
       var round = obj.round;
-       console.log("GAmeID: " + _id + " -- Round: " +round);
-      console.log(JSON.stringify(games[_id]));
       if(games.hasOwnProperty(_id) && (games[_id].currentRound == round)){
          numberOfPlayerAnswer[_id] = numberOfPlayerAnswer[_id]+1;
-         console.log(_id + " --- " + obj.questionId +" ----- " + obj.result + " \\\\\ " + JSON.stringify(numberOfPlayerAnswer));
-         console.log("Found game: " +JSON.stringify(games[_id]));
          if(games[_id].passedRound[round] != true) // undefined or false
             games[_id].passedRound[round] = false;
          try{
@@ -502,15 +460,12 @@
                sendMessageToAPlayer(playerEmail, dataToSend);
             }
           }
-          console.log("games[_id].passedRound[round]: " +games[_id].passedRound[round] + " -- obj.result: " + obj.result + " -- umberOfPlayerAnswer[_id]:" + numberOfPlayerAnswer[_id]);
           if(games[_id].passedRound[round] == false && (obj.result == 'true' || numberOfPlayerAnswer[_id]>= 2)) {
-            console.log("clearTimeout(recordIntervals[_id])");
             clearTimeout(recordIntervals[_id]);
-             games[_id].passedRound[round] = true;
-             games[_id].currentRound = games[_id].currentRound+1;
+            games[_id].passedRound[round] = true;
+            games[_id].currentRound = games[_id].currentRound+1;
             numberOfPlayerAnswer[_id]= 0;
             if(games[_id].currentRound < games[_id].round){
-              console.log("Request next round");
               sendRequestNextRoundToAll(_id, games[_id]);
             } 
             else {
@@ -532,8 +487,6 @@
 
     game_server.onReceiveRqEndGame = function(obj) {
       var _id = obj.gameId;
-      console.log("Game with id: " + _id + " receive request to end!");
-      console.log("Current Games: " + JSON.stringify(games) );
       if(games.hasOwnProperty(_id)){
         endgame(_id);
       }
@@ -571,15 +524,12 @@
             if(games[_id].currentRound < games[_id].round){
               var end_time = new Date();
               var dif = end_time.getTime() - start_time.getTime();
-              console.log("Tick no. " + count + " after " + Math.round(dif/1000) + " seconds");
               numberOfPlayerAnswer[_id]= 0;
-              console.log("Next round by interval");
               sendRequestNextRoundToAll(_id, games[_id]);
               count++;
             }
             else{
               clearTimeout(interval);
-              console.log("Endgame by timerrrrr");
               endgame(_id);
             }
     		}
@@ -592,30 +542,29 @@
 
     function endWhenPlayerQuitGame(_id, notice, data) {
       clearTimeout(recordIntervals[_id]);
-	  if(games.hasOwnProperty(_id)){
-		  console.log("End game! zzzzzzzzzzzzzzzzz: " +JSON.stringify(games[_id]));
-		  var dataToSend = {};
-		  dataToSend.notice = notice;
-      data.scores = games[_id].scores;
-		  dataToSend.data = data;
-		  sendMessageToAll(games[_id],dataToSend);
-			try{
-			   delete recordIntervals[_id];
-			   delete numberOfPlayerAnswer[_id];
-				//delete gameRounds[_id];
-				console.log(JSON.stringify(games));
-        for(var playerEmail in games[_id].clientPlayers){
-           players[playerEmail].status = 1;
-           if(currentGameOfPlayer.hasOwnProperty(playerEmail)){
-             delete currentGameOfPlayer[playerEmail];
-           }
-        }
-				delete games[_id];
-			}
-			 catch(err) {
-				 console.log("Error when delete data to endGame: " + JSON.stringify(err));
-			}
-	  }
+  	  if(games.hasOwnProperty(_id)){
+  		  console.log("End game! zzzzzzzzzzzzzzzzz: " +JSON.stringify(games[_id]));
+  		  var dataToSend = {};
+  		  dataToSend.notice = notice;
+        data.scores = games[_id].scores;
+  		  dataToSend.data = data;
+  		  sendMessageToAll(games[_id],dataToSend);
+  			try{
+  			   delete recordIntervals[_id];
+  			   delete numberOfPlayerAnswer[_id];
+  				console.log(JSON.stringify(games));
+          for(var playerEmail in games[_id].clientPlayers){
+             players[playerEmail].status = 1;
+             if(currentGameOfPlayer.hasOwnProperty(playerEmail)){
+               delete currentGameOfPlayer[playerEmail];
+             }
+          }
+  				delete games[_id];
+  			}
+  			 catch(err) {
+  				 console.log("Error when delete data to endGame: " + JSON.stringify(err));
+  			}
+  	  }
     }
 
     function endgame( _id) {
@@ -686,7 +635,15 @@
       catch (err) {
          console.log("Error when sendMessageToAPlayer " + JSON.stringify(err));
       }
-       
+    }
+
+    function lengthOfObj(obj) {
+      var length = 0;
+      for(var k in obj){
+        if(obj.hasOwnProperty(k))
+         length++;
+      }
+      return length;
     }
 
 
