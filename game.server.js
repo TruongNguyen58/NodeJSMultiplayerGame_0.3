@@ -18,6 +18,7 @@
   var TYPE_CONNECTED = "userJoined";
   var TYPE_CREATE_GAME_SUCCESS = "createGameSuccess";
   var TYPE_JOIN_GAME_SUCCESS = "joinGameSuccess";
+  var TYPE_JOIN_GAME_NOT_SUCCESS = "joinGameNotSuccess";
   var TYPE_PLAYER_JOIN_GAME = "playerJoinGame";
   var TYPE_PLAYER_EXIT_GAME = "playerExitGame";
   var TYPE_PALYER_READY_GAME = "readyForGame";
@@ -282,7 +283,7 @@
       
       var gameId = obj.gameId;
       var playerJoin = obj.player;
-      if(games.hasOwnProperty(gameId)) {
+      if(games.hasOwnProperty(gameId) && lengthOfObj(games[gameId].clientPlayers) < games[gameId].playerNumber){
         games[gameId].clientPlayers[obj.playerEmail] = playerJoin;
         var dataToSend = {"notice" : TYPE_PLAYER_JOIN_GAME};
         dataToSend.data = obj;
@@ -294,6 +295,8 @@
       }
       else {
          console.log("games notHasOwnProperty(gameId)");
+         var dataToSend = {"notice" : TYPE_JOIN_GAME_NOT_SUCCESS};
+         app_server.sendMsgToClient(clients[playerJoin], dataToSend);
       }
     }; //game_server.joinGame
 
@@ -381,10 +384,12 @@
     game_server.inviteToGame = function(sId, obj) {
       var dataToSend = {};
       var playerEmail = obj.player;
-      if(players[playerEmail].status == 1) {
+      var gameId = obj.gameId;
+      if(players[playerEmail].status == 1 && games.hasOwnProperty(gameId)) {
          dataToSend.notice = TYPE_INVITE;
          dataToSend.data = obj;
-         app_server.sendMsgToClient(clients[playerId], dataToSend);
+         dataToSend.data.game = games[gameId];
+         app_server.sendMsgToClient(clients[playerEmail], dataToSend);
       }
       else {
         dataToSend.notice = TYPE_PLAYER_NOT_AVAILABLE;
