@@ -286,7 +286,8 @@
       if(games.hasOwnProperty(gameId) && lengthOfObj(games[gameId].clientPlayers) < games[gameId].playerNumber){
         games[gameId].clientPlayers[obj.playerEmail] = playerJoin;
         var dataToSend = {"notice" : TYPE_PLAYER_JOIN_GAME};
-        dataToSend.data = obj;
+        dataToSend.data = {};
+        dataToSend.data.game = games[gameId];
         for(var key in games[gameId].clientPlayers){
           currentGameOfPlayer[key] = gameId;
           players[key].status = 2;
