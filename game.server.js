@@ -410,8 +410,9 @@
     game_server.startGame = function(obj) {
       var gameId = obj.gameId;
   		var dataToSend = {};
+      var prepareTime = 5;
   		dataToSend.notice = "startGame";
-  		dataToSend.data = obj;
+  		dataToSend.data = {"prepareTime" : prepareTime};
       if(games.hasOwnProperty(gameId)) {
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
@@ -435,7 +436,7 @@
         setTimeout(function() {
           // gameTimers[gameId] = startGameTimer();
           recordIntervals[gameId] = startIntervalTimer(gameId, intervalTime);
-        }, 3*1000);
+        }, prepareTime*1000);
       }
       
     }; //game_server.confirmJoinGame
