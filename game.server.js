@@ -99,6 +99,7 @@
 	   	}
         delete players[email];
       }
+      console.log(JSON.stringify(playerData));
       players[email] = {"name": playerData.name, "status": playerData.status, "socketId" : sId, "channel" : playerData.channel, "email" : email};
       Object.keys(socketsOfClients).forEach(function(oldSocketId){
         if (socketsOfClients[oldSocketId] == email){
@@ -250,16 +251,26 @@
     }; //game_server.findGame
 
     game_server.createGame = function(obj) {
+      console.log("xxxxxxx1");
       var game = obj.game;
+        console.log("xxxxxxx2");
       var gameId = game.id;
+        console.log("xxxxxxx3");
       games[gameId] = game;
+        console.log("xxxxxxx4");
       var dataToSend = {"notice" : TYPE_CREATE_GAME_SUCCESS};
+        console.log("xxxxxxx5");
       for(var key in games[gameId].clientPlayers){
-
+          console.log("xxxxxxx6");
         currentGameOfPlayer[key] = gameId;
+          console.log("xxxxxxx7");
+          console.log("Player: " + JSON.stringify(players[key]));
         players[key].status = 2;
+          console.log("xxxxxxx8");
         console.log("Email: " + key + " -- " + JSON.stringify(players[key]));
+         console.log("xxxxxxx9"); 
         app_server.sendMsgToClient(clients[key], dataToSend);
+          console.log("xxxxxxx10");
       }
 
     }; //game_server.createGame
@@ -269,8 +280,9 @@
       var gameId = newGame.id;
       delete games[gameId];
       games[gameId] = newGame;
-      for(var key in games[gameId].clientPlayers){
-         games[gameId].clientPlayers[key].status = false;  
+      for(var key in games[gameId].clientPlayers) {
+        if(games[gameId].clientPlayers[key].isHost == "false")
+          games[gameId].clientPlayers[key].status = false;  
       }
       var dataToSend = {"notice" : "updateGame"};
       dataToSend.data = obj;
@@ -297,7 +309,7 @@
       else {
          console.log("games notHasOwnProperty(gameId)");
          var dataToSend = {"notice" : TYPE_JOIN_GAME_NOT_SUCCESS};
-         app_server.sendMsgToClient(clients[playerJoin], dataToSend);
+         app_server.sendMsgToClient(clients[obj.playerEmail], dataToSend);
       }
     }; //game_server.joinGame
 
@@ -322,11 +334,15 @@
           var dataToSend = {"notice" : TYPE_HOST_EXIT_GAME};
           dataToSend.data = {"player" :  games[gameId].clientPlayers[playerExit]};
           for(var email in games[gameId].clientPlayers) {
-            players[email].status = 1;
-            delete currentGameOfPlayer[email];
-            if(email != playerExit)
-              app_server.sendMsgToClient(clients[email], dataToSend);
-
+            try{
+              players[email].status = 1;
+              delete currentGameOfPlayer[email];
+              if(email != playerExit)
+                app_server.sendMsgToClient(clients[email], dataToSend);
+            }
+            catch(err) {
+              console.log("Error: " + JSON.stringify(err));
+            }
           }
           delete games[gameId];
         }
@@ -410,7 +426,7 @@
     game_server.startGame = function(obj) {
       var gameId = obj.gameId;
   		var dataToSend = {};
-      var prepareTime = 5;
+      var prepareTime = 3;
   		dataToSend.notice = "startGame";
   		dataToSend.data = {"prepareTime" : prepareTime};
       if(games.hasOwnProperty(gameId)) {
