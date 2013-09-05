@@ -372,7 +372,6 @@
     }; //game_server.exitWaitingGame
 
     game_server.checkStartGame = function(obj) {  
-      
       var gameId = obj.gameId;
       var player = obj.player;
       games[gameId].clientPlayers[player].status = true;
@@ -426,9 +425,9 @@
     game_server.startGame = function(obj) {
       var gameId = obj.gameId;
   		var dataToSend = {};
-      var prepareTime = 3;
+      var prepareTime = obj.prepareTime;
   		dataToSend.notice = "startGame";
-  		dataToSend.data = {"prepareTime" : prepareTime};
+  		dataToSend.data = obj;
       if(games.hasOwnProperty(gameId)) {
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
