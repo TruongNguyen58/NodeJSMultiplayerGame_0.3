@@ -251,26 +251,14 @@
     }; //game_server.findGame
 
     game_server.createGame = function(obj) {
-      console.log("xxxxxxx1");
       var game = obj.game;
-        console.log("xxxxxxx2");
       var gameId = game.id;
-        console.log("xxxxxxx3");
       games[gameId] = game;
-        console.log("xxxxxxx4");
       var dataToSend = {"notice" : TYPE_CREATE_GAME_SUCCESS};
-        console.log("xxxxxxx5");
       for(var key in games[gameId].clientPlayers){
-          console.log("xxxxxxx6");
         currentGameOfPlayer[key] = gameId;
-          console.log("xxxxxxx7");
-          console.log("Player: " + JSON.stringify(players[key]));
         players[key].status = 2;
-          console.log("xxxxxxx8");
-        console.log("Email: " + key + " -- " + JSON.stringify(players[key]));
-         console.log("xxxxxxx9"); 
         app_server.sendMsgToClient(clients[key], dataToSend);
-          console.log("xxxxxxx10");
       }
 
     }; //game_server.createGame
@@ -432,6 +420,7 @@
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
         }
+         console.log(xxxxx0);
         numberOfPlayerAnswer[gameId] = 0;
         games[gameId].passedRound = {};
         if(recordIntervals.hasOwnProperty(gameId)){
@@ -443,9 +432,11 @@
            console.log("Err: " +JSON.stringify(err));
           }
         }
+        console.log(xxxxx1);
         for(var playerEmail in games[gameId].clientPlayers){
           games[gameId].scores[playerEmail] = 0;
         } 
+         console.log(xxxxx2);
         games[gameId].playing = "true";
         console.log("game saved with: "  + JSON.stringify(games[gameId]));
         setTimeout(function() {
