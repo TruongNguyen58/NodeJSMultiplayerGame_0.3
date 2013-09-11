@@ -425,16 +425,15 @@
         numberOfPlayerAnswer[gameId] = 0;
          console.log("xxxxx1xxxx: ");
         games[gameId].passedRound = {};
-         console.log("xxxxx2xxxx: ");
-        if(recordIntervals.hasOwnProperty(gameId)){
-          try{
-            clearTimeout(recordIntervals[gameId]);
-            delete recordIntervals[gameId];
-          }
-           catch(err) {
+         console.log("xxxxx2xxxx: " + JSON.stringify(recordIntervals));
+         try{
+            if(recordIntervals.hasOwnProperty(gameId)){
+                clearTimeout(recordIntervals[gameId]);
+                delete recordIntervals[gameId];
+            }
+          } catch(err) {
            console.log("Err: " +JSON.stringify(err));
           }
-        }
         console.log("xxxxx1: " + JSON.stringify(game[gameId]));
         if(!games[gameId].hasOwnProperty("scores"))
           games[gameId].scores = {};
