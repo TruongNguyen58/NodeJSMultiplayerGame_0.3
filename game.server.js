@@ -421,8 +421,11 @@
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
         }
          console.log("xxxxx0: " +JSON.stringify( games[gameId]));
+
         numberOfPlayerAnswer[gameId] = 0;
+         console.log("xxxxx1xxxx: ");
         games[gameId].passedRound = {};
+         console.log("xxxxx2xxxx: ");
         if(recordIntervals.hasOwnProperty(gameId)){
           try{
             clearTimeout(recordIntervals[gameId]);
