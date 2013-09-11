@@ -420,7 +420,7 @@
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
         }
-         console.log("xxxxx0: " ++JSON.stringify( games[gameId]));
+         console.log("xxxxx0: " +JSON.stringify( games[gameId]));
         numberOfPlayerAnswer[gameId] = 0;
         games[gameId].passedRound = {};
         if(recordIntervals.hasOwnProperty(gameId)){
