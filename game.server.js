@@ -433,8 +433,8 @@
             }
           } catch(err) {
            console.log("Err: " +JSON.stringify(err));
-          }
-        console.log("xxxxx1: " + JSON.stringify(game[gameId]));
+          } 
+        console.log("xxxxx1: ");
         if(!games[gameId].hasOwnProperty("scores"))
           games[gameId].scores = {};
         for(var playerEmail in games[gameId].clientPlayers){
