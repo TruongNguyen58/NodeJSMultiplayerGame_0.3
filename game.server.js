@@ -420,7 +420,7 @@
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
         }
-         console.log(xxxxx0);
+         console.log("xxxxx0");
         numberOfPlayerAnswer[gameId] = 0;
         games[gameId].passedRound = {};
         if(recordIntervals.hasOwnProperty(gameId)){
@@ -432,11 +432,11 @@
            console.log("Err: " +JSON.stringify(err));
           }
         }
-        console.log(xxxxx1);
+        console.log("xxxxx1");
         for(var playerEmail in games[gameId].clientPlayers){
           games[gameId].scores[playerEmail] = 0;
         } 
-         console.log(xxxxx2);
+         console.log("xxxxx2");
         games[gameId].playing = "true";
         console.log("game saved with: "  + JSON.stringify(games[gameId]));
         setTimeout(function() {
