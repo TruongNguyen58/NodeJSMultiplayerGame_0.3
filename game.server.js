@@ -140,6 +140,19 @@
       }
     };
 
+    game_server.onUserLogout = function(sId) {
+      try{
+        if(socketsOfClients.hasOwnProperty(sId)) {
+          delete players[socketsOfClients[sId]];
+          delete clients[socketsOfClients[sId]];
+          delete socketsOfClients[sId];
+          }
+        }
+      catch (err) {
+        console.log("ERORR onUserLogout: " + JSON.stringify(err));
+      }
+    };
+
     game_server.onUserQuitGame = function(sId) {
       try{
         if(socketsOfClients.hasOwnProperty(sId)) {
@@ -420,12 +433,8 @@
         for(var playerEmail in games[gameId].clientPlayers){
           app_server.sendMsgToClient(clients[playerEmail], dataToSend);
         }
-         console.log("xxxxx0: " +JSON.stringify( games[gameId]));
-
         numberOfPlayerAnswer[gameId] = 0;
-         console.log("xxxxx1xxxx: ");
         games[gameId].passedRound = {};
-         console.log("xxxxx2xxxx: " + JSON.stringify(recordIntervals));
          try{
             if(recordIntervals.hasOwnProperty(gameId)){
                 clearTimeout(recordIntervals[gameId]);
@@ -434,21 +443,17 @@
           } catch(err) {
            console.log("Err: " +JSON.stringify(err));
           } 
-        // console.log("xxxxx1: " + JSON.stringify(game[gameId]));
         if(!games[gameId].hasOwnProperty("scores"))
           games[gameId].scores = {};
         for(var playerEmail in games[gameId].clientPlayers){
           games[gameId].scores[playerEmail] = 0;
         } 
-         console.log("xxxxx2");
         games[gameId].playing = "true";
         console.log("game saved with: "  + JSON.stringify(games[gameId]));
         setTimeout(function() {
-          // gameTimers[gameId] = startGameTimer();
           recordIntervals[gameId] = startIntervalTimer(gameId, intervalTime);
         }, prepareTime*1000);
       }
-      
     }; //game_server.confirmJoinGame
 
     game_server.onPlayerAnswer = function(obj) {
@@ -466,7 +471,7 @@
             games[_id].passedRound[round] = false;
          try{
           if(obj.result == 'true')
-             games[_id].scores[obj.player] =  games[_id].scores[obj.player] +1;
+             games[_id].scores[obj.player] =  games[_id].scores[obj.player] +3;
           else
              games[_id].scores[obj.player] =  games[_id].scores[obj.player] -1;
           for(var playerEmail in games[_id].clientPlayers){
