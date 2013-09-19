@@ -474,6 +474,7 @@
              games[_id].scores[obj.player] =  games[_id].scores[obj.player] +3;
           else
              games[_id].scores[obj.player] =  games[_id].scores[obj.player] -1;
+          games[_id].scores[obj.player] =  games[_id].scores[obj.player] + obj.bonus;
           for(var playerEmail in games[_id].clientPlayers){
             if(playerEmail != obj.player){
                var dataToSend = {};
