@@ -26,6 +26,7 @@
   var TYPE_HOST_EXIT_GAME = "hostExitGame";
   var TYPE_AVAILABLE_PLAYERS = "availablePlayers";
   var TYPE_AVAILABLE_GAMES = "availableGames";
+   var TYPE_CHAT = "chat";
   var intervalTime = 15;
   var maxPlayerInGame = 2;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -51,6 +52,19 @@
           str += (i++) +" .Player: " + userName + "   .Channel: " + players[userName].appName +".           \n";
       });
       res.send(str);
+    };
+
+    game_server.chat = function(obj) {
+      console.log("begin chat with other user");
+      var dataToSend = {};
+      dataToSend.notice = TYPE_CHAT;
+      dataToSend.data = obj;
+      obj.players.forEach(function(player){
+        if(clients.hasOwnProperty(player)){
+          console.log("begin chat with user: " + player + " -- ID: " +clients[player] + " -- dataToSend: " + JSON.stringify(dataToSend));
+          app_server.sendMsgToClient(clients[player], dataToSend);
+        }
+      });
     };
 
     game_server.sendMsgToOtherClient = function(obj) {
@@ -230,38 +244,35 @@
         }
     }; //game_server.getPlayingGames
 
-    game_server.findPlayer = function(obj) {
+    game_server.findQuickMatch = function(obj) {
         var dataToSend = {};
-        dataToSend.notice = TYPE_FOUND_PLAYER;
-        var playerName = obj.player;
-        if (players.hasOwnProperty(playerName)) {
-          if(playerName != obj.sender && players[playerName].status == 1) {
-            dataToSend.data = {"player":playerName, "available" : true};
+        console.log('looking for a game for user: ' + obj.data.sender);
+        var i;
+        var keys = Object.keys(object);
+        var length = keys.length;
+        var result = [];
+        for(i=0;i<length;i++) {
+          var p = object[keys[Math.floor(Math.random() * length)]];
+          if(p.email != obj.player && p.status == 1) {
+            result.push(p);
+            i ++;
           }
-          else {
-            dataToSend.data = {"player":playerName, "available" : false};
-          }  
+          if(i>4){
+            break;
+          }
+        }
+        if(result.length > 0) {
+          for (var player in result) {
+              dataToSend.notice = "inviteQuickMatch";
+              dataToSend.data = obj;
+              console.log('found user: ' + JSON.stringify(player));
+              app_server.sendMsgToClient(clients[player.email], dataToSend);
+          }
         }
         else {
-          dataToSend.data = {"player":playerName, "available" : false};
-        }
-        app_server.sendMsgToClient(clients[obj.sender], dataToSend);
-    }; //game_server.findPlayer
 
-    game_server.findGame = function(obj) {
-        var dataToSend = {};
-        for(var playerName in players) {
-           if (players.hasOwnProperty(playerName)) {
-             if(playerName != obj.sender && players[playerName].status ==1) {
-                dataToSend.notice = TYPE_INVITE;
-                dataToSend.data = obj;
-                console.log('found user: ' + JSON.stringify(playerName));
-                app_server.sendMsgToClient(clients[playerName], dataToSend);
-                break;
-             }
-           }
         }
-    }; //game_server.findGame
+    }; //game_server.findQuickMatch
 
     game_server.createGame = function(obj) {
       var game = obj.game;
@@ -275,6 +286,26 @@
       }
 
     }; //game_server.createGame
+
+    game_server.createQuickGame = function(obj) {
+      console.log("create quick game: " + JSON.stringify(obj));
+      var game = obj.game;
+      var gameId = game.id;
+      games[gameId] = game;
+      var dataToSend = {"notice" : "createQuickGameSuccess"};
+      dataToSend.data = obj;
+      for(var key in games[gameId].clientPlayers){
+        try{
+          currentGameOfPlayer[key] = gameId;
+          players[key].status = 2;
+          app_server.sendMsgToClient(clients[key], dataToSend);
+        }
+        catch (err) {
+          console.log("error when create quick match");
+        }
+        
+      }
+    }; //game_server.createQuickGame
 
     game_server.updateGame = function(obj) {
       var newGame = obj.game;
@@ -507,6 +538,38 @@
         console.log(" nonnnnnnnnnnnnnnnn games.hasOwnProperty(_id) && (games.currRound === round) ");
       }  
     }
+
+    game_server.onPauseGame = function(obj) {
+      var _id = obj.gameId;
+       if(games.hasOwnProperty(_id)){
+        var dataToSend = {};
+        dataToSend.notice = obj.type;
+        dataToSend.data = obj;
+        for(var playerEmail in games[_id].clientPlayers){
+           sendMessageToAPlayer(playerEmail, dataToSend);
+        }
+        if(recordIntervals.hasOwnProperty(_id)) {
+          clearTimeout(recordIntervals[_id]);
+          delete recordIntervals[_id];
+        }
+       }
+      
+    }; //game_server.onPauseGame
+
+    game_server.onResumeGame = function(obj) {
+      var _id = obj.gameId;
+      var time = obj.gameTime;
+       if(games.hasOwnProperty(_id)){
+        var dataToSend = {};
+        dataToSend.notice = obj.type;
+        dataToSend.data = obj;
+        for(var playerEmail in games[_id].clientPlayers){
+           sendMessageToAPlayer(playerEmail, dataToSend);
+        }
+        recordIntervals[_id] = startIntervalTimer(_id, time);
+       }
+      
+    }; //game_server.onResumeGame
 
     game_server.onReceiveRqEndGame = function(obj) {
       var _id = obj.gameId;

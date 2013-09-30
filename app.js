@@ -72,6 +72,9 @@ io.sockets.on('connection', function(socket) {
     var obj = JSON.parse(msg);
     console.log("Receive request type from client: " +obj.type);
    try{
+    if(obj.type == "chat") {
+      game_server.chat(obj);
+    }
     if(obj.type == "sendMsgToOtherClient") {
       game_server.sendMsgToOtherClient(obj);
     }
@@ -80,6 +83,9 @@ io.sockets.on('connection', function(socket) {
 		}
     else if(obj.type == "createGame") {
       game_server.createGame(obj);
+    }
+    else if(obj.type == "createQuickGame") {
+      game_server.createQuickGame(obj);
     }
     else if(obj.type == "updateGame") {
       game_server.updateGame(obj);
@@ -96,8 +102,8 @@ io.sockets.on('connection', function(socket) {
     else if(obj.type == "checkStartGame") {
       game_server.checkStartGame(obj);
     }
-    else if(obj.type == "findPlayer") {
-      game_server.findPlayer(obj);
+    else if(obj.type == "findQuickMatch") {
+      game_server.findQuickMatch(obj);
     }
 		else if(obj.type == "confirmJoinGame") {
 		  game_server.confirmJoinGame(obj);
@@ -120,12 +126,18 @@ io.sockets.on('connection', function(socket) {
 		else if(obj.type == "invite") {
 		  game_server.inviteToGame(socket.id, obj);
 		}
-		 else if(obj.type == "requestEndGame") {
+		else if(obj.type == "requestEndGame") {
 		  game_server.onReceiveRqEndGame(obj);
 		}
 		else if(obj.type == "playerQuitGame") {
 		  game_server.onUserQuitGame(socket.id);
 		}
+    else if(obj.type == "pauseGame") {
+      game_server.onPauseGame(obj);
+    }
+    else if(obj.type == "resumeGame") {
+      game_server.onResumeGame(obj);
+    }
 		else if(obj.type == "playerLogOut") {
 		  game_server.onUserLogout(socket.id);
 		}
