@@ -523,7 +523,7 @@
               setTimeout(function() {
                 console.log("currentRound: " +games[_id].currentRound + " --- Total round: " +games[_id].round );
                 endgame(_id);
-              }, 2*1000);
+              }, 1*1000);
             }
          }
         }
@@ -694,7 +694,7 @@
               delete recordIntervals[_id];
             }
             recordIntervals[_id] = startIntervalTimer(_id, intervalTime);
-          }, 2*1000); 
+          }, 1*1000); 
        } 
     }
 
