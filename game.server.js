@@ -167,16 +167,13 @@
       }
     };
 
-    game_server.onUserQuitGame = function(sId) {
+    game_server.onUserQuitGame = function(obj) {
+      var gameId = obj.gameId;
+      var playerEmail = obj.playerEmail
       try{
-        if(socketsOfClients.hasOwnProperty(sId)) {
-          if(currentGameOfPlayer.hasOwnProperty(socketsOfClients[sId])) {
-            var gameId = currentGameOfPlayer[socketsOfClients[sId]];
             var data = {};
-		      	data.player = socketsOfClients[sId];
+		      	data.player = playerEmail;
             endWhenPlayerQuitGame( gameId, "playerQuitGame", data)
-          }
-        }
       }
       catch (err) {
         console.log("ERORR onUserQuitGame: " + JSON.stringify(err));
