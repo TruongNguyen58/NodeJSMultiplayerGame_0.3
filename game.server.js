@@ -618,7 +618,7 @@
     		}
     		catch (err) {
     		}
-        }, timerInterval*1000);
+        }, ((timerInterval*1000) +500);
         return interval;
       } 
     }
