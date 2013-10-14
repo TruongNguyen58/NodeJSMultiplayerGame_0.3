@@ -98,7 +98,7 @@ game_server.setPlayer = function(sId, data) {
 };
 
 function onUserConnect(sId, playerData) {
-	var playerId = playerData.playerId;
+	var playerId = playerData.id;
 	var i = 0;
 	// Does not exist ... so, proceed
 	clients[playerId] = sId;
@@ -120,7 +120,7 @@ function onUserConnect(sId, playerData) {
 		"status" : playerData.status,
 		"socketId" : sId,
 		"channel" : playerData.channel,
-		"playerId" : playerId
+		"id" : playerId
 	};
 	Object.keys(socketsOfClients).forEach(function(oldSocketId) {
 		if (socketsOfClients[oldSocketId] == playerId) {
