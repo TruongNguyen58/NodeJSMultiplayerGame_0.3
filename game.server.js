@@ -471,6 +471,7 @@ game_server.checkStartGame = function(obj) {
 			ready = false;
 		} else
 			for ( var playerId in games[gameId].clientPlayers) {
+				console.log("playerId: " + JSON.stringify(games[gameId].clientPlayers[playerId]));
 				var r = games[gameId].clientPlayers[playerId].ready;
 				console.log("playerId ready: " + r);
 				if (r == false || r == "false") {
