@@ -37,7 +37,7 @@ var allowCrossDomain = function(req, res, next) {
 
 app.configure(function() {
 	app.use(allowCrossDomain);
-	app.set('port', 443);
+	app.set('port', 3002);
 	app.set('views', __dirname + '/views');
 	app.set('view engine', 'jade');
 	app.use(express.favicon());
