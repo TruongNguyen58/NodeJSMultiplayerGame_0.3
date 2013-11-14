@@ -37,7 +37,7 @@ var allowCrossDomain = function(req, res, next) {
 
 app.configure(function() {
 	app.use(allowCrossDomain);
-	app.set('port', 3002);
+	app.set('port', 443);
 	app.set('views', __dirname + '/views');
 	app.set('view engine', 'jade');
 	app.use(express.favicon());
@@ -58,13 +58,13 @@ app.get('/ping', function(req, res) {
 	res.send('pong');
 });
 
-// var server = app.listen(app.get('port'), function() {
-// 	console.log("Express server listening on port " + app.get('port'));
-// });
+var server = app.listen(app.get('port'), function() {
+	console.log("Express server listening on port " + app.get('port'));
+});
 
-var server = https.createServer(sslOptions,app).listen(app.get('port'), function(){
-  console.log("Secure Express server listening on port " + app.get('port'));
-});  
+// var server = https.createServer(sslOptions,app).listen(app.get('port'), function(){
+//   console.log("Secure Express server listening on port " + app.get('port'));
+// });  
 
 var io = socketio.listen(server, {
 	origins : '*:*'
