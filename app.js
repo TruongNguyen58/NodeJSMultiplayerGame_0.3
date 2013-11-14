@@ -1,9 +1,23 @@
-/*  Copyright (c) 2013 TruongNGUYEN
-    Server for projectX
-    BH Licensed.
+/**
+ * Module dependencies.
  */
 
-var express = require('express'), socketio = require('socket.io'), http = require('http'), app_server = module.exports, game_server = require('./game.server.js'), path = require('path');
+var express = require('express'),
+socketio = require('socket.io'), 
+http = require('http'), 
+app_server = module.exports, 
+game_server = require('./game.server.js'), 
+path = require('path'),
+https = require('https'),
+fs = require('fs');
+
+var sslOptions = {
+  key: fs.readFileSync('./ssl/server.key'),
+  cert: fs.readFileSync('./ssl/server.crt'),
+  ca: fs.readFileSync('./ssl/ca.crt'),
+  requestCert: true,
+  rejectUnauthorized: false
+};
 
 var app = express();
 
@@ -23,7 +37,7 @@ var allowCrossDomain = function(req, res, next) {
 
 app.configure(function() {
 	app.use(allowCrossDomain);
-	app.set('port', 3002);
+	app.set('port', 3003);
 	app.set('views', __dirname + '/views');
 	app.set('view engine', 'jade');
 	app.use(express.favicon());
@@ -37,17 +51,21 @@ app.configure('development', function() {
 	app.use(express.errorHandler());
 });
 
+app.get('/users', function(req, res) {
+	game_server.users(req, res);
+});
 app.get('/ping', function(req, res) {
 	res.send('pong');
 });
 
-app.get('/users', function(req, res) {
-	game_server.users(req, res);
-});
+// var server = app.listen(app.get('port'), function() {
+// 	console.log("Express server listening on port " + app.get('port'));
+// });
 
-var server = app.listen(app.get('port'), function() {
-	console.log("Express server listening on port " + app.get('port'));
-});
+var server = https.createServer(sslOptions,app).listen(app.get('port'), function(){
+  console.log("Secure Express server listening on port " + app.get('port'));
+});  
+
 var io = socketio.listen(server, {
 	origins : '*:*'
 });
