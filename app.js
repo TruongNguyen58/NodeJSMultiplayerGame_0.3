@@ -12,11 +12,11 @@ https = require('https'),
 fs = require('fs');
 
 var sslOptions = {
-  key: fs.readFileSync('./ssl/server.key'),
-  cert: fs.readFileSync('./ssl/server.crt'),
-  ca: fs.readFileSync('./ssl/ca.crt'),
-  requestCert: true,
-  rejectUnauthorized: false
+  key: fs.readFileSync('ssl.key'),
+  cert: fs.readFileSync('ssl.crt'),
+  ca: fs.readFileSync('sub.class1.server.ca.pem'),
+  // requestCert: true,
+  // rejectUnauthorized: false
 };
 
 var app = express();
@@ -58,13 +58,13 @@ app.get('/ping', function(req, res) {
 	res.send('pong');
 });
 
-var server = app.listen(app.get('port'), function() {
-	console.log("Express server listening on port " + app.get('port'));
-});
+// var server = app.listen(app.get('port'), function() {
+// 	console.log("Express server listening on port " + app.get('port'));
+// });
 
-// var server = https.createServer(sslOptions,app).listen(app.get('port'), function(){
-//   console.log("Secure Express server listening on port " + app.get('port'));
-// });  
+var server = https.createServer(sslOptions,app).listen(app.get('port'), function(){
+  console.log("Secure Express server listening on port " + app.get('port'));
+});  
 
 var io = socketio.listen(server, {
 	origins : '*:*'
