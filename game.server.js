@@ -523,8 +523,11 @@ game_server.startGame = function(obj) {
 	var prepareTime = obj.prepareTime;
 	dataToSend.notice = "startGame";
 	dataToSend.data = obj;
+	games[gameId] = obj.game;
 	if (games.hasOwnProperty(gameId)) {
 		for ( var playerId in games[gameId].clientPlayers) {
+			currentGameOfPlayer[playerId] = gameId;
+			players[playerId].status = 2;
 			app_server.sendMsgToClient(clients[playerId], dataToSend);
 		}
 		numberOfPlayerAnswer[gameId] = 0;
