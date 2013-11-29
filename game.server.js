@@ -107,7 +107,7 @@ function onUserConnect(sId, playerData) {
 			if (currentGameOfPlayer.hasOwnProperty(playerId)) {
 				var gameId = currentGameOfPlayer[playerId];
 				var data = {};
-				data.player = playerName;
+				data.player = playerId;
 				endWhenPlayerQuitGame(gameId, "playerQuitGame", data)
 			}
 		} catch (err) {
@@ -569,8 +569,11 @@ function onQuizAnswer(obj) {
 		try {
 			if (obj.result == 'true')
 				games[_id].scores[obj.player] = games[_id].scores[obj.player] + 3;
-			else
+			else{
 				games[_id].scores[obj.player] = games[_id].scores[obj.player] - 1;
+				if(games[_id].scores[obj.player] < 0)
+					games[_id].scores[obj.player] = 0;
+			}
 			games[_id].scores[obj.player] = games[_id].scores[obj.player]
 					+ obj.bonus;
 			for ( var playerId in games[_id].clientPlayers) {
@@ -704,6 +707,7 @@ function endWhenPlayerQuitGame(_id, notice, data) {
 		var dataToSend = {};
 		dataToSend.notice = notice;
 		data.scores = games[_id].scores;
+		data.scores[data.player] = -1;
 		dataToSend.data = data;
 		sendMessageToAll(games[_id], dataToSend);
 		try {
