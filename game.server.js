@@ -116,7 +116,7 @@ function onUserConnect(sId, playerData) {
 	}
 	console.log(JSON.stringify(playerData));
 	players[playerId] = {
-		"name" : playerData.name,
+		"name" : playerData.name,		
 		"status" : playerData.status,
 		"socketId" : sId,
 		"channel" : playerData.channel,
@@ -494,7 +494,8 @@ game_server.checkStartGame = function(obj) {
 game_server.inviteToGame = function(sId, obj) {
 	var dataToSend = {};
 	var playerId = obj.player;
-	if (players[playerId].status == 1 ) {
+	console.log("Player: " + JSON.stringify(players[playerId]));
+	if (players.hasOwnProperty(playerId) && players[playerId].status == 1 ) {
 		dataToSend.notice = TYPE_INVITE;
 		dataToSend.data = obj;
 //		if(obj.hasOwnProperty("gameId") && games.hasOwnProperty(obj.gameId)){
