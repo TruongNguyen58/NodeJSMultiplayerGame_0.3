@@ -178,6 +178,13 @@ game_server.onUserLogout = function(sId) {
 	}
 };
 
+game_server.setPlayerStatus = function(obj) {
+	var playerId = obj.player
+	if (players.hasOwnProperty(playerId)){
+		players[playerId].status = obj.status;
+	}
+};
+
 game_server.onUserQuitGame = function(obj) {
 	var gameId = obj.gameId;
 	var playerId = obj.playerId
@@ -716,7 +723,7 @@ function endWhenPlayerQuitGame(_id, notice, data) {
 			delete numberOfPlayerAnswer[_id];
 			console.log(JSON.stringify(games));
 			for ( var playerId in games[_id].clientPlayers) {
-				players[playerId].status = 1;
+				// players[playerId].status = 1;
 				if (currentGameOfPlayer.hasOwnProperty(playerId)) {
 					delete currentGameOfPlayer[playerId];
 				}
@@ -751,8 +758,8 @@ function endgame(_id) {
 					if (currentGameOfPlayer.hasOwnProperty(playerId)) {
 						delete currentGameOfPlayer[playerId];
 					}
-					if (players[playerId].status == 2)
-						players[playerId].status = 1;
+					// if (players[playerId].status == 2)
+					// 	players[playerId].status = 1;
 				}
 				delete games[_id];
 			} catch (err) {

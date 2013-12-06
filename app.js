@@ -130,6 +130,8 @@ io.sockets.on('connection', function(socket) {
 				game_server.onReceiveRqEndGame(obj);
 			} else if (obj.type == "playerQuitGame") {
 				game_server.onUserQuitGame(obj);
+			} else if (obj.type == "setPlayerStatus") {
+				game_server.setPlayerStatus(obj);
 			} else if (obj.type == "pauseGame") {
 				game_server.onPauseGame(obj);
 			} else if (obj.type == "resumeGame") {
