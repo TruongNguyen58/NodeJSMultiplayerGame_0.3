@@ -221,9 +221,9 @@ game_server.getAvailablePlayers = function(sId, obj) {
 		Object.keys(players).forEach(
 				function(playerId) {
 					console.log("Player: " + JSON.stringify(players[playerId]));
-					if (players[playerId].appName == obj.appName
-							&& players[playerId].status == 1)
-						if (i <= 20) {
+					if (players[playerId].appName == obj.appName)
+							// && players[playerId].status == 1)
+						if (i <= 200) {
 							availableUsers.push(players[playerId]);
 						}
 					i++;
