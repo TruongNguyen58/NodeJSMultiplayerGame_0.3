@@ -301,7 +301,7 @@ game_server.findPlayer = function(obj) {
 	Object.keys(players).every(
 				function(playerId) {
 					try{
-						if (playerId != null && players[playerId].playerName.toLowerCase() == obj.player.toLowerCase()){
+						if (playerId != null && players[playerId].name.toLowerCase() == obj.player.toLowerCase()){
 							console.log('found user: ' + JSON.stringify(players[playerId]));
 							dataToSend.data = {
 								"player" : players[playerId],
@@ -322,7 +322,7 @@ game_server.findPlayer = function(obj) {
 			"player" :  {},
 			"available" : false
 		};
-		console.log('player:' + JSON.stringify(playerName)+ " not available");
+		console.log('player:' + JSON.stringify(name)+ " not available");
 	}
 	sendMessageToPlayer(clients[obj.sender], dataToSend);
 }; //game_server.findPlayer
