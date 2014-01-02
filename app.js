@@ -96,6 +96,8 @@ io.sockets.on('connection', function(socket) {
 				game_server.checkPlayerStatus(socket.id, obj);
 			}else if (obj.type == "findGame") {
 				game_server.findGame(obj);
+			}else if (obj.type == "findPlayer") {
+				game_server.findPlayer(obj);
 			} else if (obj.type == "createGame") {
 				game_server.createGame(obj);
 			} else if (obj.type == "createQuickGame") {

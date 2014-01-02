@@ -293,6 +293,40 @@ game_server.getPlayingGames = function(sId, obj) {
 	}
 }; //game_server.getPlayingGames
 
+game_server.findPlayer = function(obj) {
+	console.log("findPlayer : " + JSON.stringify(obj));
+	var dataToSend = {};
+	dataToSend.notice = TYPE_FOUND_PLAYER;
+	console.log('looking for player' + obj.player +' for user: ' + obj.sender);
+	Object.keys(players).every(
+				function(playerId) {
+					try{
+						if (playerId != null && players[playerId].playerName.toLowerCase() == obj.player.toLowerCase()){
+							console.log('found user: ' + JSON.stringify(players[playerId]));
+							dataToSend.data = {
+								"player" : players[playerId],
+								"available" : true
+							};
+							return false;
+						}
+						return true;
+					}
+					catch(err) {
+						console.log("Player: " + playerId + JSON.stringify(players));
+						return true;
+					}						
+				});
+	console.log("dataToSend: " + JSON.stringify(dataToSend));
+	if(typeof dataToSend.data === undefined) {
+		dataToSend.data = {
+			"player" :  {},
+			"available" : false
+		};
+		console.log('player:' + JSON.stringify(playerName)+ " not available");
+	}
+	sendMessageToPlayer(clients[obj.sender], dataToSend);
+}; //game_server.findPlayer
+
 game_server.findQuickMatch = function(obj) {
 	var dataToSend = {};
 	console.log('looking for a game for user: ' + obj.data.sender);
