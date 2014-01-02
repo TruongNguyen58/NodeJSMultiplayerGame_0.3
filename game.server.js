@@ -317,7 +317,7 @@ game_server.findPlayer = function(obj) {
 					}						
 				});
 	console.log("dataToSend: " + JSON.stringify(dataToSend));
-	if(typeof dataToSend.data === undefined) {
+	if(!dataToSend.hasOwnProperty("data")) {
 		dataToSend.data = {
 			"player" :  {},
 			"available" : false
