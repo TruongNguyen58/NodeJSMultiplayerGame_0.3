@@ -324,7 +324,7 @@ game_server.findPlayer = function(obj) {
 		};
 		console.log('player:' + JSON.stringify(name)+ " not available");
 	}
-	sendMessageToPlayer(clients[obj.sender], dataToSend);
+	sendMessageToAPlayer(clients[obj.sender], dataToSend);
 }; //game_server.findPlayer
 
 game_server.findQuickMatch = function(obj) {
