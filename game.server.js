@@ -312,19 +312,21 @@ game_server.findPlayer = function(obj) {
 						return true;
 					}
 					catch(err) {
-						console.log("Player: " + playerId + JSON.stringify(players));
+						console.log("Error Player: " + playerId + JSON.stringify(players));
 						return true;
 					}						
 				});
-	console.log("dataToSend: " + JSON.stringify(dataToSend));
-	if(!dataToSend.hasOwnProperty("data")) {
+	if(dataToSend.hasOwnProperty("data")) {
+		console.log("dataToSend xxx: " + JSON.stringify(dataToSend));
+	}
+	else {
 		dataToSend.data = {
 			"player" :  {},
 			"available" : false
 		};
 		console.log('player:' + JSON.stringify(name)+ " not available");
 	}
-	sendMessageToAPlayer(clients[obj.sender], dataToSend);
+	app_server.sendMsgToClient(obj.sender, dataToSend);
 }; //game_server.findPlayer
 
 game_server.findQuickMatch = function(obj) {
