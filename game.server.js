@@ -298,6 +298,7 @@ game_server.findPlayer = function(obj) {
 	var dataToSend = {};
 	dataToSend.notice = TYPE_FOUND_PLAYER;
 	console.log('looking for player' + obj.player +' for user: ' + obj.sender);
+	var found = false;
 	Object.keys(players).every(
 				function(playerId) {
 					try{
@@ -307,24 +308,25 @@ game_server.findPlayer = function(obj) {
 								"player" : players[playerId],
 								"available" : true
 							};
+							found = true;
 							return false;
 						}
 						return true;
 					}
 					catch(err) {
-						console.log("Error Player: " + playerId + JSON.stringify(players));
 						return true;
 					}						
 				});
-	if(dataToSend.hasOwnProperty("data")) {
-		console.log("dataToSend xxx: " + JSON.stringify(dataToSend));
+	console.log("find finish");
+	if(found == true) {
+		console.log(" found dataToSend xxx: " + JSON.stringify(dataToSend));
 	}
 	else {
+		console.log("not found");
 		dataToSend.data = {
 			"player" :  {},
 			"available" : false
 		};
-		console.log('player:' + JSON.stringify(name)+ " not available");
 	}
 	app_server.sendMsgToClient(obj.sender, dataToSend);
 }; //game_server.findPlayer
