@@ -140,16 +140,30 @@ io.sockets.on('connection', function(socket) {
 				game_server.onResumeGame(obj);
 			} else if (obj.type == "playerLogOut") {
 				game_server.onUserLogout(socket.id);
+			} else if (obj.type == "sendMsgToAll") {
+				var dataToSend = {
+					"notice" : "sendMsgToAll"
+				};
+				dataToSend.data = obj;
+				sendMsgToAllClients(dataToSend);
 			}
 		} catch (err) {
 			console.log("Errorrrorororoororororororororororororo");
 		}
-
 	});
 	socket.on('disconnect', function() {
 		game_server.onUserDisconnect(socket.id);
 	});
 });
+
+function sendMsgToAllClients(msg) {
+	console.log("xxxx" + JSON.stringify(msg));
+	try {
+		io.sockets.emit('message', msg);
+	} catch (err) {
+		console.log("Error: " + JSON.stringify(err));
+	}
+};
 
 app_server.sendMsgToClient = function(sId, msg) {
 	try {
