@@ -47,8 +47,7 @@ game_server.users = function(req, res) {
 	var i = 0;
 	Object.keys(players).forEach(
 			function(userName) {
-				str += (i++) + " .Player: " + userName + "   .Channel: "
-						+ players[userName].appName + ".           \n";
+				str += (i++) + "--" +  JSON.stringify(players[userName])+ ".           \n";
 			});
 	res.send(str);
 };
