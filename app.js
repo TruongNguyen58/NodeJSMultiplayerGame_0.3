@@ -145,8 +145,9 @@ io.sockets.on('connection', function(socket) {
 					"notice" : "sendMsgToAll"
 				};
 				dataToSend.data = obj;
-				if(!dataToSend.data.hasOwnProperty("channel")) {
-					dataToSend.data["channel"] = "";
+				var channelKey = 'channel';
+				if(!dataToSend.data.hasOwnProperty(channelKey)) {
+					dataToSend.data[channelKey] = "";
 				}
 				sendMsgToAllClients(dataToSend);
 			}
